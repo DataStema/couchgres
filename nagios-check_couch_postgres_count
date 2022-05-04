@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/bin/bash
 
 #
 # nagios check script to make sure couchdb & postgres table
@@ -13,7 +13,7 @@ postgres_host=$2
 
 difference_threashold=10
 
-dbs=`curl -s http://$couch_host:5984/_all_dbs | json -ga  | grep -v -E '_replicator|_users|articles|feeds|fluent' | sort`
+dbs=`curl -s http://$couch_host:5984/_all_dbs | json -ga  | grep -v -E '_replicator|_users|_global_changes|articles|feeds|fluent' | sort`
 
 err=""
 msg="$dbs"
@@ -23,7 +23,7 @@ for db in $dbs; do
     couch_count=`curl -s http://$couch_host:5984/$db | json doc_count`
     #if [ -z "$couch_count" ]; then continue; fi #no db
      
-    postgres_count=`psql -h $postgres_host -d mydb -Upgsql -wqA -c \
+    postgres_count=`psql postgresql://postgres:postgres@$postgres_host/postgres -wqA -c \
                    "SELECT count(id) FROM $db" | tail -2 | head -1`
 
     if [ "$couch_count" -ne "$postgres_count" ]; then
